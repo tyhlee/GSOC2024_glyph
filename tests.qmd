@@ -79,3 +79,7 @@ ggplot(data=tmax,
   theme(legend.position = "bottom") + 
   labs(x = "Longitude", y = "Latitude",shape="maximum temperature")
 ```
+
+## HARD
+
+Please see <https://github.com/huizezhang-sherry/cubble/pull/26>.
