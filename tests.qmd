@@ -1,0 +1,81 @@
+---
+title: "GSOC 2024: Tests for the glyph map project"
+format: pdf
+editor: visual
+---
+
+```{r import packages}
+library(tidyverse) # data manipulation
+library(cubble) # glyph
+library(sf) # spatial
+```
+
+## EASY
+
+```{r run the examples provided in ?geom_glyph}
+print_p <- GGally::print_if_interactive
+
+p <- ggplot(data = GGally::nasa,
+       aes(x_major = long, x_minor = day,
+           y_major = lat, y_minor = surftemp)) +
+  geom_glyph_box() +
+  geom_glyph_line() +
+  geom_glyph() +
+  theme_bw()
+print_p(p)
+
+# rescale on each individual glyph ---------------
+p <- ggplot(data = GGally::nasa,
+       aes(x_major = long, x_minor = day,
+           y_major = lat, y_minor = surftemp)) +
+  geom_glyph(global_rescale = FALSE)
+print_p(p)
+
+# adjust width and height with relative & absolute value ---------------
+p <- ggplot() +
+  geom_glyph(data = GGally::nasa,
+             aes(x_major = long, x_minor = day,
+                 y_major = lat, y_minor = surftemp),
+                 width = rel(0.8), height = 1) +
+   theme_bw()
+print_p(p)
+
+# apply a re-scaling on Y and use polar coordinate
+p <- GGally::nasa %>%
+  ggplot(aes(x_major = long, x_minor = day,
+             y_major = lat, y_minor = ozone)) +
+    geom_glyph_box(fill=NA) +
+    geom_glyph_line() +
+    geom_glyph(y_scale = GGally::range01, polar = TRUE)
+print_p(p)
+```
+
+## MEDIUM
+
+I understood this test as creating an example with a glyph on a map strictly based on geoms in the ggplot2 package (i.e., not using the cubble package).
+
+```{r glyph from other geoms}
+# modify the data prepped from https://huizezhang-sherry.github.io/cubble/articles/cb4glyph.html
+tmax <- climate_aus %>% 
+    rowwise() %>% 
+    filter(nrow(ts) == 366) %>% 
+  face_temporal() %>%  
+  group_by(month = tsibble::yearmonth(date)) %>% 
+  summarise(tmax = mean(tmax, na.rm = TRUE)) %>% 
+  unfold(long, lat) %>% 
+  filter(!is.na(tmax)) %>%
+  mutate(tmax_cat = cut(tmax,breaks=c(0,10,20,30,40,50)))
+  
+
+ggplot(data=tmax,
+       aes(x_major = long, y_major = lat, 
+           x_minor = month, y_minor = tmax)) +
+  geom_sf(data = ozmaps::abs_ste, 
+        fill = "grey95", color = "white",
+        inherit.aes = FALSE) + 
+  geom_point(data=tmax,aes(x=long,y=lat,shape=tmax_cat)) +
+  coord_sf(xlim = c(110, 155)) + 
+  theme_void() + 
+  theme(legend.position = "bottom") + 
+  labs(x = "Longitude", y = "Latitude",shape="maximum temperature")
+```
